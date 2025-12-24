@@ -11,6 +11,7 @@ PyMuPDF>=1.23.0
 # Vector Search & Embeddings
 langchain>=0.1.0
 langchain-community>=0.0.20
+langchain-huggingface>=0.0.1
 faiss-cpu>=1.7.4
 sentence-transformers>=2.2.0
 
