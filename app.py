@@ -189,6 +189,9 @@ def render_main(app: LegalSearchApp, context_text: Optional[str]):
                         with tab:
                             meta = doc["metadata"]
                             st.markdown(f"**{meta.get('title', 'Untitled')}** (p. {meta.get('page_start', '?')})")
+                            section_type = meta.get("section_type")
+                            if section_type:
+                                st.caption(f"Category: {section_type.replace('_', ' ').title()}")
                             st.text(doc['content'])
                     
                     # Download Report
