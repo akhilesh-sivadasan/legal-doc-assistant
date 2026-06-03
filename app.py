@@ -31,7 +31,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional
 
-import google.generativeai as genai
+from google import genai
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from dotenv import load_dotenv
@@ -67,17 +67,23 @@ class LegalSearchApp:
         self._setup_api()
 
     def _setup_api(self):
-        """Configure the Gemini client, failing fast if the key is missing.
+        """Build the Gemini client, failing fast if the key is missing.
 
         We stop the whole app (``st.stop``) rather than limp along, because
         every meaningful action depends on the generation API — a clear early
         error is far better than a confusing failure deep inside a query.
+
+        Uses the modern ``google-genai`` SDK: a single ``Client`` object (held
+        on the instance) is the entry point for all requests, replacing the
+        deprecated module-level ``genai.configure()`` + ``GenerativeModel``
+        pattern from the legacy ``google-generativeai`` package. Constructing
+        the client does no network I/O — the key is validated on first request.
         """
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
             st.error("GOOGLE_API_KEY not found in environment variables")
             st.stop()
-        genai.configure(api_key=api_key)
+        self.client = genai.Client(api_key=api_key)
 
     @st.cache_resource
     def load_models(_self):
@@ -182,9 +188,14 @@ ANSWER:"""
 
         try:
             # gemini-1.5-flash is chosen for speed/cost: RAG answers are short
-            # and grounded, so the larger "pro" model buys little here.
-            model = genai.GenerativeModel(model_name="models/gemini-1.5-flash-001")
-            response = model.generate_content([prompt])
+            # and grounded, so the larger "pro" model buys little here. In the
+            # google-genai SDK the model is named per-request (no "models/"
+            # prefix and no separate GenerativeModel object); ``contents`` takes
+            # the prompt string directly.
+            response = self.client.models.generate_content(
+                model="gemini-1.5-flash-001",
+                contents=prompt,
+            )
             return response.text
         except Exception as e:
             logger.error(f"Generation failed: {e}")
