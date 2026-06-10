@@ -2,8 +2,8 @@
 streamlit>=1.32.0
 python-dotenv>=1.0.0
 
-# Google AI
-google-generativeai>=0.4.0
+# Google AI (modern SDK; replaces the deprecated google-generativeai package)
+google-genai>=1.0.0
 
 # PDF Processing
 PyMuPDF>=1.23.0
